@@ -1,6 +1,4 @@
-import loadVt from "./vt/Cargo.toml";
 import { parseNpt } from "./util";
-const vt = loadVt(); // trigger async loading of wasm
 
 
 class Core {
@@ -75,8 +73,6 @@ class Core {
         this.dispatchEvent('play');
       }
     };
-
-    this.wasm = await vt;
 
     this.driver = this.driverFn(
       { feed, now, setTimeout, setInterval, onFinish, reset, setWaiting },
@@ -297,7 +293,8 @@ class Core {
   }
 
   initializeVt(cols, rows) {
-    this.vt = this.wasm.create(cols, rows);
+    // @TODO: implement VT using the xterm dep
+    this.vt = {}; //  this.wasm.create(cols, rows);
     this.vt.cols = cols;
     this.vt.rows = rows;
 
