@@ -293,45 +293,70 @@ class Core {
     }
 
     initializeVt(cols, rows) {
-        let terminal = new Terminal({scrollback: 0});
+        let terminal = new Terminal({cols: cols, rows: rows, scrollback: 0, windowsMode: true});
+        let wasReset = false;
+        let dirtyStart = 0;
+        let dirtyEnd = 0;
+        terminal._core._inputHandler.onRequestRefreshRows((start, end) => {
+            dirtyStart = start;
+            dirtyEnd = end;
+        });
+
 
         // @TODO: do we need to handle the buffer changed event?
         this.vt = {
             feed: (data) => {
                 terminal.write(data);
-                // reach into the guts of xterm-headless and get the lines it thinks are dirty
-                let dirty = terminal._core._dirtyRowService;
-                let count = dirty.end - dirty.start + 1;
-                let rows = new Array(count);
-                for(let i=0; i<count; i++) {
-                    rows[i] = dirty.start + i;
-                }
-                dirty.clearRange();
+                if(data === "\x1bc") {
+                    wasReset = true;
+                    // the terminal was reset, so mark all rows as dirty
+                    let result = new Array(rows);
+                    for(let i=0; i<rows; i++) {
+                        result[i] = i;
+                    }
+                    return result;
+                } else {
+                    if(wasReset) {
+                        // the terminal was reset, so mark all rows as dirty
+                        wasReset = false;
+                        let result = new Array(rows);
+                        for(let i=0; i<rows; i++) {
+                            result[i] = i;
+                        }
+                        return result;
+                    }
+                    let count = dirtyEnd - dirtyStart + 1;
+                    let result = new Array(count);
+                    for(let i=0; i<count; i++) {
+                        result[i] = dirtyStart + i;
+                    }
 
-                return rows;
+                    return result;
+                }
             },
 
             get_line: (idx) => {
+                let result = [];
                 const buf = terminal.buffer.active;
                 const line = buf.getLine(idx);
-                let cell = null;
-                const L = line.length;
-                let result = [];
-                for(let i=0; i<L; i++) {
-                    cell = line.getCell(i, cell);
+                if(line) {
+                    let cell = null;
+                    const L = line.length;
+                    for(let i=0; i<L; i++) {
+                        cell = line.getCell(i, cell);
 
-                    result.push([cell.getChars(), new Map([
-                        cell.isFgDefault() ? [] : ["fg", cell.getFgColor()],
-                        cell.isBgDefault() ? [] : ["bg", cell.getBgColor()],
-                        cell.isBold() ? ['bold', true] : [],
-                        cell.isItalic() ? ['italic', true] : [],
-                        cell.isUnderline() ? ['underline', true] : [],
-                        cell.isStrikethrough() ? ['strikethrough', true] : [],
-                        cell.isBlink() ? ['blink', true] : [] ,
-                        cell.isInverse() ? ['inverse', true] : []
-                    ].filter(x => x.length > 0))]);
+                        result.push([cell.getChars(), new Map([
+                            cell.isFgDefault() ? [] : ["fg", cell.getFgColor()],
+                            cell.isBgDefault() ? [] : ["bg", cell.getBgColor()],
+                            cell.isBold() ? ['bold', true] : [],
+                            cell.isItalic() ? ['italic', true] : [],
+                            cell.isUnderline() ? ['underline', true] : [],
+                            cell.isStrikethrough() ? ['strikethrough', true] : [],
+                            cell.isBlink() ? ['blink', true] : [] ,
+                            cell.isInverse() ? ['inverse', true] : []
+                        ].filter(x => x.length > 0))]);
+                    }
                 }
-
                 return result;
             },
 
