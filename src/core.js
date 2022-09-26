@@ -298,8 +298,8 @@ class Core {
         let dirtyStart = 0;
         let dirtyEnd = 0;
         terminal._core._inputHandler.onRequestRefreshRows((start, end) => {
-            dirtyStart = start;
-            dirtyEnd = end;
+            dirtyStart = Math.max(start - 1, 0);
+            dirtyEnd = Math.min(end + 1, rows - 1);
         });
 
 
