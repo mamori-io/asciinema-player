@@ -275,8 +275,8 @@ class Core {
     }
 
     ensureVt() {
-        const cols = this.cols ?? 80;
-        const rows = this.rows ?? 24;
+        const cols = this.cols || 80;
+        const rows = this.rows || 24;
 
         if (this.vt !== undefined && this.vt.cols === cols && this.vt.rows === rows) {
             return;
@@ -293,7 +293,7 @@ class Core {
     }
 
     initializeVt(cols, rows) {
-        let terminal = new Terminal();
+        let terminal = new Terminal({scrollback: 0});
 
         // @TODO: do we need to handle the buffer changed event?
         this.vt = {
