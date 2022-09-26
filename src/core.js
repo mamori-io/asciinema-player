@@ -320,7 +320,16 @@ class Core {
                 for(let i=0; i<L; i++) {
                     cell = line.getCell(i, cell);
 
-                    result.push([cell.getChars(), new Map([])]);
+                    result.push([cell.getChars(), new Map([
+                        cell.isFgDefault() ? [] : ["fg", cell.getFgColor()],
+                        cell.isBgDefault() ? [] : ["bg", cell.getBgColor()],
+                        cell.isBold() ? ['bold', true] : [],
+                        cell.isItalic() ? ['italic', true] : [],
+                        cell.isUnderline() ? ['underline', true] : [],
+                        cell.isStrikethrough() ? ['strikethrough', true] : [],
+                        cell.isBlink() ? ['blink', true] : [] ,
+                        cell.isInverse() ? ['inverse', true] : []
+                    ].filter(x => x.length > 0))]);
                 }
 
                 return result;
